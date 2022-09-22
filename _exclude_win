@@ -1,0 +1,13 @@
+_exclude
+_include
+_exclude_win
+_include_win
+venv
+pub.sh
+config.sh
+crontab.txt
+filelist_proc1.txt
+.\Log
+.\Data
+.\Proc\c
+.\.vscode

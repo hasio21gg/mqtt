@@ -1,0 +1,21 @@
+
+FROM eclipse-mosquitto
+
+ENV http_proxy=http://proxy.sthdg.local:8080
+ENV https_proxy=http://proxy.sthdg.local:8080
+
+RUN apk add --update openssl 
+RUN apk add bash
+RUN apk add --no-chache \
+        --repository http://dl-cdn.alpinelinux.org/alpine/v3.16/main python3~=3.10
+
+#RUN python3 -m pip install --upgrade pip && \
+#    pip install –upgrade wheel
+#    python3 -m pip install awscrt
+#    python3 -m pip install awsiotsdk
+
+ENV SSL_PATH=/ssl/mosquitto
+
+WORKDIR $SSL_PATH
+
+#RUN echo "PS1='[\u@\h \W]\\$ '" >> .bashrc'

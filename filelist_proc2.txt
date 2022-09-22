@@ -1,0 +1,7 @@
+;|処理タイプ|ファイル区分|ファイル名パターン|ファイル格納パス|再帰探索|ファイルタイム関数|MQTTトピック|
+;|FTYPE     |FKUBUN      |FPATERN           |FPATH           |FRECUR  |FTIME             |FTOPIC      |
+;|----------|------------|------------------|----------------|--------|------------------|------------|
+PROC2A,DATA,foo_[0-9][0-9][0-9].jpeg,03A\C\DL1,N,N,FT02
+;PROC2A,META,foo_[0-9][0-9][0-9].csv,03A\C\DL1,N,N,FT02
+PROC2A,DATA,Input[0-9]_Camera[0-9][0-9]*.jpg,20220705_PM_内,Y,FT01,FT03
+;PROC2A,SLUDGE,Input[0-9]_Camera[0-9][0-9]*.bmp,20220705_PM_内,Y,FT01,FT03

@@ -1,0 +1,70 @@
+version: "3"
+services:
+  pub:
+    build:
+      context: .
+      dockerfile: ./pub/dockerfile
+      #image: eclipse-mosquitto
+    container_name: mosquitto-pub
+    hostname: pub
+    tty: true
+    volumes:
+      - ./pub/config:/mosquitto/config
+      - ./pub/data:/mosquitto/data
+      - ./pub/log:/mosquitto/log
+      - ./pub/cert:/mosquitto/cert
+    working_dir : "/mqtt"
+    networks:
+      bridge1:
+        ipv4_address: 192.168.254.201
+        #- bridge1
+  sub:
+      build:
+        context: .
+        dockerfile: ./sub/dockerfile
+        #image: eclipse-mosquitto
+      container_name: mosquitto-sub
+      hostname: sub
+      tty: true
+      volumes:
+      - ./sub/config:/mosquitto/config
+      - ./sub/data:/mosquitto/data
+      - ./sub/log:/mosquitto/log
+      - ./sub/cert:/mosquitto/cert
+      - ./sub/proc:/mqtt/proc
+      working_dir : "/mqtt"
+      networks:
+        bridge1:
+          ipv4_address: 192.168.254.202
+        #- bridge1
+      ports:
+        - 9000:8080
+  broker:
+    build:
+      context: .
+      dockerfile: ./broker/dockerfile
+    #image: eclipse-mosquitto
+    container_name: mosquitto-broker
+    hostname: broker
+    tty: true
+    volumes:
+      - ./broker/config:/mosquitto/config
+      - ./broker/data:/mosquitto/data
+      - ./broker/log:/mosquitto/log
+      - ./broker/cert:/mosquitto/cert
+    working_dir : "/mqtt"
+    networks:
+      bridge1:
+        ipv4_address: 192.168.254.200
+        #- bridge1
+    ports:
+      #- 1883:1883
+      - 8883:8883
+      - 9001:9001
+networks:
+  bridge1:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.254.0/24

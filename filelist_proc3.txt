@@ -1,0 +1,3 @@
+;
+;----------------------------------------------
+PROC2A,LOOP@RESPATH@RESFILE@TIMESTAMP@TOPIC@RECVTOPIC

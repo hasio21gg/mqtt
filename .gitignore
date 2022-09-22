@@ -1,0 +1,13 @@
+venv
+/Log/**
+!/Log/**/
+!/Log/**/.gitkeep
+/Data/Recv/**
+!/Data/Recv/**
+!/Data/Recv/**/.gitkeep
+/Data/Temp/**
+!/Data/Temp/**/
+!/Data/Temp/**/.gitkeep
+
+!.gitignore
+!.gitkeep

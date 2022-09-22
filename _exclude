@@ -1,0 +1,8 @@
+_exclude
+_exclude_win
+_include
+_include_win
+venv
+Log/*
+Data/Recv/*
+Data/Temp/*

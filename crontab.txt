@@ -1,0 +1,2 @@
+*/1 * * * * bash /mnt/d/ap99999/mqtt/mqtt1/pub.sh PROC1
+

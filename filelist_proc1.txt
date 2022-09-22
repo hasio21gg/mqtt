@@ -1,0 +1,6 @@
+#ファイルの種類,ファイル名パターン,実階層,(任意)ルール階層
+#test1,foo_*.txt,
+#test2,bar_*.txt,
+#test3,baz_*.txt,sub1
+FTYPE1,foo_*.txt,03AADL1/,03A/A/DL1
+#FTYPE1,bar_*.txt,03A/B/DL1/,

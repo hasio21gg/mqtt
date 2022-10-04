@@ -3,4 +3,5 @@
 #test2,bar_*.txt,
 #test3,baz_*.txt,sub1
 FTYPE1,foo_*.txt,03AADL1/,03A/A/DL1
-#FTYPE1,bar_*.txt,03A/B/DL1/,
+FTYPE1,bar_*.txt,03A/A/DL1/,
+FTYPE1,baz_*.txt,03A/B/DL1/,

@@ -21,10 +21,6 @@ setlocal
 	if "%2" NEQ "" set JOBLOG=%$LOG%%FMTDATE%_%~n0.%1_%2.log
 	if "%3" NEQ "" set JOBLOG=%$LOG%%FMTDATE%_%~n0.%1_%2_%3.log
 
-    echo pub   : %$ROOT%
-    echo pub   : %$DATA%
-    echo pub   : %$LOG%
-    echo pub   : %JOBLOG%
 	set $MOVE=MOVE
 	::set $MOVE=echo ■MOVE
 	echo ================================================================================
@@ -50,7 +46,13 @@ setlocal
 
 	set SUBSC=PROC2A
 	CALL :PROC3A %SUBSC%
+
+	set SUBSC=PROC1A
+	::CALL :PROC3A %SUBSC%
     
+	cscript %$ROOT%UtyMoveFile.vbs %$RECVBK% -1
+	cscript %$ROOT%UtyDirDelete.vbs %$RECVBK% -10
+	
 	set PROCNAME=PROC3
     goto ENDPROC
 :PROC3A
@@ -59,8 +61,9 @@ setlocal
 	set _SUBSC_=%1
 	CALL :MSGPROC _SUBSC_ :[%_SUBSC_%]
 
-	::■ yyyymmddHHMMSSss_XXXXXXが監視対象
-	set FPAT=[0-9]*_%_SUBSC_%
+	::■ yyyymmddHHMMSSss_FPATが監視対象
+	:: TXT以降に続く文字あっても対象になるので注意
+	set FPAT=[0-9]*_%_SUBSC_%*.txt
 	set SRCFIND=%$DBR_SUBSC_RECV%
 	set WFILE=FILELIST3.txt
 	set WORKFILE=%$WORK%%WFILE%
@@ -72,21 +75,30 @@ setlocal
 
 	::■ファイル一覧ヘッダー作成
 	set GETSENDHEAD=
+	SETLOCAL ENABLEDELAYEDEXPANSION
 	FOR /F "eol=; delims=, tokens=1,2" %%I in (%SENDHEAD%) do (
 		CALL :GET_SENDHEAD %%I %%J %_SUBSC_%
+		IF "!GETSENDHEAD!" NEQ "" (
+			CALL :MSGPROC FIND_HEAD_INFO[%_SUBSC_%]
+			GOTO PROC3A_GETHEAD
+		)
 	)
+	SETLOCAL DISABLEDELAYEDEXPANSION
 	IF "%GETSENDHEAD%" EQU "" (
-		CALL :MSGPROC WARN_NOT_FOUND_HEAD_FILES.
+		CALL :MSGPROC WARN_NOT_FOUND_HEAD_FILES.[%_SUBSC_%]
 		goto PROC3A_END
 	)
+:PROC3A_GETHEAD
+	SETLOCAL DISABLEDELAYEDEXPANSION
 	CALL :MSGPROC GETSENDHEAD: %GETSENDHEAD%
 	
 	::■ファイル一覧作成
 	CALL :MSGPROC DIR /B %SRCFIND% /A-D %DIROPT%
 	CALL :MSGPROC FINDSTR /R "%FPAT%"
-	DIR /B %SRCFIND% /A-D %DIROPT% | FINDSTR /R "%FPAT%" > %WORKFILE%
+	CALL :MSGPROC %WORKFILE%
+	DIR /B %SRCFIND% /A-D %DIROPT% | FINDSTR /R /I "%FPAT%" > %WORKFILE%
 	IF %ERRORLEVEL% NEQ 0 (
-		CALL :MSGPROC WARN_NOT_FOUND_FILES.[%ERRORLEVEL%]
+		CALL :MSGPROC NOT_FOUND_FILES SUBSCRIBE '%_SUBSC_%'.[%ERRORLEVEL%]
 		goto PROC3A_END
 	)
 	set SUBSCLIST=%$DBR_SUBSC_RECV%
@@ -95,26 +107,49 @@ setlocal
 	SETLOCAL ENABLEDELAYEDEXPANSION
 	FOR /F "eol=; tokens=1 delims=," %%I in (%WORKFILE%) do (
 		set LOOPNAME=%%I
+		::%LOOPNAME%から%_SUBSC_%は除去する
 		CALL set LOOPNAME=%%LOOPNAME:%_SUBSC_%.TXT=%%
 		set SENDFILE=%$WORK%!LOOPNAME!%SFILE%
-		IF EXIST !SENDFILE! del /Q !SENDFILE!
+		::遅延環境変数に格納を確認するためECHOを行う
 		ECHO !SENDFILE!
-		ECHO %GETSENDHEAD%>>!SENDFILE!
+		::ECHO %GETSENDHEAD%
+		IF EXIST !SENDFILE! del /Q !SENDFILE!
+		ECHO %GETSENDHEAD%>!SENDFILE!
 		FOR /F "eol=; tokens=1,2,6,7 delims=," %%A IN (%$DBR_SUBSC_RECV%%%I) do (
 			CALL :PROC3A1 %%A %%B %%C %%D !SENDFILE! %%I
 			set /a LISTS+=1
 		)
 		CALL :MSGPROC [リスト件数:!LISTS!][ファイル数:!RETCNTS!]
+		::■パブリッシュ
+		IF !LISTS! EQU !RETCNTS! (
+			CALL :MSGPROC パブリッシュ[!SENDFILE!]
+			CALL :PROC3A2 !SENDFILE!
+		)
+		ECHO !RC!
+		IF !RC! NEQ 0 (
+			CALL :MSGPROC ERROR_PUBLISHED.[%_SUBSC_%][!RC!]
+			mv !SENDFILE! %$ERRDATA%
+			goto PROC3A_END
+		)
+		::使用済みワークは削除する
+		IF EXIST !SENDFILE! del /Q !SENDFILE!
+    	::DBR受信トリガーファイルを移動する
+		set RECVFILE=%$DBR_SUBSC_RECV%%%I
+		cscript %$ROOT%UtyFileBackUp.vbs !RECVFILE! %$RECVBK%
+		
 		set LISTS=0
 		set RETCNTS=0
 	)
 	::CALL :MSGPROC [リスト件数:%LISTS%][ファイル数:%RETCNTS%]
 	SETLOCAL DISABLEDELAYEDEXPANSION
 
-
+	::IF EXIST %WORKFILE% DEL %WORKFILE%
 :PROC3A_END
 	goto :EOF
 :PROC3A1
+	::----------------------------------------------------------------------------
+	:: データブリッジの未着時対応 
+	::----------------------------------------------------------------------------
 	set PROCNAME=PROC3A1
 	set RESPATH=%1
 	set RESFILE=%2
@@ -122,7 +157,7 @@ setlocal
 	set _TOPIC_=%4
 	set SEND=%5
 	set LOOP=%6
-	CALL :MSGPROC %RESPATH%%RESFILE% [%PROC3A1_WAIT%][%PROC3A1_MAXWAIT%]
+	::CALL :MSGPROC %RESPATH%%RESFILE% [%PROC3A1_WAIT%][%PROC3A1_MAXWAIT%]
 	::echo %SEND%
 	::echo %LOOP%
 	::IF NOT EXIST %RESPATH%/* mkdir %RESPATH%
@@ -144,6 +179,38 @@ setlocal
 	ECHO %LOOP%,%RESPATH%,%RESFILE%,%TIMESTAMP%,%TOPIC%,%RECV_TOPIC%>>%SEND%
 :PROC3A1_END
 	set /a RETCNTS+=1
+	goto :EOF
+:PROC3A2
+	::----------------------------------------------------------------------------
+	:: MQTT パブリッシュ
+	:: AWS IoT Core トピックへの送信
+	::----------------------------------------------------------------------------
+	set PY=pub1.py
+	set SENDFILE=%1
+	set ENDP=--endpoint %$MQTT_BROKER_HOST%
+	set PORT=--port %$MQTT_BROKER_PORT%
+	set CAFI=--ca_file %$MQTT_CA__FILE%
+	set KEYF=--key %$MQTT_KEY_FILE%
+	set CERT=--cert %$MQTT_CERTFILE%
+	set SEND=--sendlist %SENDFILE%
+	set PROXY=--proxy_host %$MQTT_BROKER_PROXY%
+	set PROXY_PORT=--proxy_port %$MQTT_BROKER_PROXY_PORT%
+	set CLIENT=--client_id %COMPUTERNAME%
+	CALL :MSGPROC %PY%
+	IF "%$MQTT_BROKER_PROXY%" EQU "" (
+		CALL :MSGPROC ====NO_PROXY====
+		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %SEND% %CLIENT%
+	) ELSE (
+		CALl :MSGPROC ====USE_PROXY====
+		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %SEND% %CLIENT%
+	)
+	CALL :MSGPROC %PUBCMD%
+	%PUBCMD%
+	set RC=%ERRORLEVEL%
+	IF %RC% NEQ 0 (
+		CALL :MSGPROC ERROR!![%RC%]
+	)
+:PROC3A2_END
 	goto :EOF
 :PROC2
 	::----------------------------------------------------------------------------
@@ -339,7 +406,7 @@ setlocal
 	goto PROC2B
 :PROC2B2
 	:: ================================================================================
-	set SUBPROC=PROC2B1
+	set SUBPROC=PROC2B2
 	goto PROC2B
 :PROC2B
 	:: ================================================================================
@@ -465,8 +532,10 @@ setlocal
 	set _HEADS_=%2
 	set _SUBSC_=%3
 	set GETSENDHEAD=
+	::echo %_NAME_% --- %_SUBSC_%
 	IF "%_NAME_%" NEQ "%_SUBSC_%" goto :EOF
 	set GETSENDHEAD=%_HEADS_:@=,%
+	::echo %_NAME_% === %_SUBSC_%
 	goto :EOF
 :GET_FILETIMESTAMP1
 	set FF=%1

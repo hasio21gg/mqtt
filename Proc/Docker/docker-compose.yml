@@ -16,7 +16,7 @@ services:
     working_dir : "/mqtt"
     networks:
       bridge1:
-        ipv4_address: 192.168.254.201
+        ipv4_address: 192.168.252.201
         #- bridge1
   sub:
       build:
@@ -35,7 +35,7 @@ services:
       working_dir : "/mqtt"
       networks:
         bridge1:
-          ipv4_address: 192.168.254.202
+          ipv4_address: 192.168.252.202
         #- bridge1
       ports:
         - 9000:8080
@@ -55,7 +55,7 @@ services:
     working_dir : "/mqtt"
     networks:
       bridge1:
-        ipv4_address: 192.168.254.200
+        ipv4_address: 192.168.252.200
         #- bridge1
     ports:
       #- 1883:1883
@@ -67,4 +67,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 192.168.254.0/24
+        - subnet: 192.168.252.0/24

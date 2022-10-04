@@ -10,6 +10,8 @@ case "$1" in
     SCP_USER=pi
     SSH_HOST=192.168.254.101
     SCP_REMOTE_PATH=D:/Dbrg/AutoTransfer/SendPath/
+    SCP_REMOTE_SUBSC=${SCP_REMOTE_PATH}SUBSC/
+    DBRG_RECV_PATH=D:\\Dbrg\\AutoTransfer\\RecvPath\\
     ;;
 "D08591")
     ROOT=/mnt/d/ap99999/mqtt/mqtt1
@@ -20,6 +22,8 @@ case "$1" in
     SCP_USER=pi
     SSH_HOST=192.168.254.101
     SCP_REMOTE_PATH=D:/Dbrg/AutoTransfer/SendPath/
+    SCP_REMOTE_SUBSC=${SCP_REMOTE_PATH}SUBSC/
+    DBRG_RECV_PATH=D:\\Dbrg\\AutoTransfer\\RecvPath\\
     ;;
 *)
     echo "NOT DEFINED COMPUTE."
@@ -30,6 +34,8 @@ esac
 case "$2" in
 "PROC1")
     WATCH_DIR=${ROOT}/Data/Recv/
+    SEND_DIR=${ROOT}/Data/Send/
+    SENDBK_DIR=${SEND_DIR}Backup/
     TEMPO_DIR=${ROOT}/Data/Temp/
     FILELIST1=filelist_proc1.txt
     ;;

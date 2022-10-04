@@ -2,7 +2,17 @@ _exclude
 _exclude_win
 _include
 _include_win
+__pycache__
 venv
+venvwin
+.git
+.gitignore
+*.vbs
+*.cmd
+*.log
 Log/*
 Data/Recv/*
 Data/Temp/*
+Data/Work/*
+Docker
+Backup

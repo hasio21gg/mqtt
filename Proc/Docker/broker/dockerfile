@@ -11,4 +11,4 @@ ENV SSL_PATH=/ssl/mosquitto
 
 WORKDIR $SSL_PATH
 
-RUN echo "PS1='[\u@\h \W]\\$ '" >> .bashrc'
+#RUN echo "PS1='[\u@\h \W]\\$ '" >> .bashrc'

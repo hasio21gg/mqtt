@@ -50,10 +50,10 @@ ERR(){
 # --------------------------------------------------------------------------------------------------
 # 処理
 # --------------------------------------------------------------------------------------------------
-PROC0A(){
+PROC1A(){
     # ----------------------------------------------------------------------------------------------
     ORGLOGTHIS=$LOGTHIS
-    SUBTHIS=PROC0A
+    SUBTHIS=PROC1A
     LOGTHIS=$(printf "%-10s:%-9s" ${THIS} ${SUBTHIS})
     LOG -------------------------------------------------------------
     LOG ${SUBTHIS}:開始 $1
@@ -75,7 +75,16 @@ PROC0A(){
     if [ ! -d ${TEMPO_DEST_DIR} ]; then
         mkdir -p ${TEMPO_DEST_DIR}
     fi
+    PUBLISHTM=`date "+%Y%m%d%H%M%S%2N"`
+    SENDLIST=${SEND_DIR}${PUBLISHTM}_PROC1A.TXT
+    if [ ! -f "${SENDLIST}" ];then
+        rm -rf ${SENDLIST}
+    fi
+    
     while read -r file; do
+        ts1=`date +%Y%m%d%H%M%S -r ${file}`
+        ts2=`date +%Y%m%d%H%M%S%3N -r ${file}`
+        echo -e ${DBRG_RECV_PATH//\\/\\\\}${LOGIC_PATH//\//\\\\},`basename ${file}`,${LV1},"DATA",${ts1},${ts2}\\r>> ${SENDLIST}
         mv -f  ${file} ${TEMPO_DEST_DIR}
         idx=$((idx+1))
     done < <(find ${WATCH_PATH} -name "${pattern}" -maxdepth 1)
@@ -83,19 +92,27 @@ PROC0A(){
     LOG mv[先][${TEMPO_DEST_DIR}]
     # ----------------------------------------------------------------------------------------------
     if [ $idx -gt 0 ]; then
-        PROC1B ${TEMPO_DIR} ${LV1} ${LV2} || PROC0A_EX1
+        # 再帰でファイルを送信する
+        PROC1A_SUB1 ${TEMPO_DIR} ${LV1} ${LV2} || PROC1A_EX1
+        PROC1A_SUB2 ${SENDLIST} ${SCP_REMOTE_SUBSC}|| PROC1A_EX1
     fi
     # ----------------------------------------------------------------------------------------------
+    #BACKUPD=`date "+%Y%m%d%H%M%S"`
+    #mv ${SENDLIST} ${SENDBK_DIR}${BACKUPD}_`basename ${SENDLIST}`
+    ./UtyFileBackup.sh ${SENDLIST} ${SENDBK_DIR}
+    ./UtyMoveFile.sh ${SENDBK_DIR} -1
+    ./UtyDirDelete.sh ${SENDBK_DIR} -10
     LOG ${SUBTHIS}:終了[$idx][$?]
     LOGTHIS=$ORGLOGTHIS
 }
-PROC0A_EX1(){
+PROC1A_EX1(){
     LOG /_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/_/
-    LOG PROC0A_EX1:例外[$ERRNUM]
+    LOG PROC1A_EX1:例外[$ERRNUM]
     case "$ERRNUM" in
     * )
         LOG システム障害
-        mv ${TEMPO_DEST_DIR}* ${WATCH_PATH}
+        LOG mv ${TEMPO_DEST_DIR}* ${WATCH_PATH}
+        #mv ${TEMPO_DEST_DIR}* ${WATCH_PATH}
         ERRNUM=$?
         LOG 切り戻し[RC=$ERRNUM]
         ;;
@@ -105,27 +122,27 @@ PROC0A_EX1(){
 # --------------------------------------------------------------------------------------------------
 # 処理
 # --------------------------------------------------------------------------------------------------
-PROC1A(){
-    # ----------------------------------------------------------------------------------------------
-    ORGLOGTHIS=$LOGTHIS
-    SUBTHIS=PROC1A
-    LOGTHIS=$(printf "%-10s:%-9s" ${THIS} ${SUBTHIS})
-    LOG -------------------------------------------------------------
-    LOG ${SUBTHIS}:開始 $1
-    # ----------------------------------------------------------------------------------------------
-    TOPICINDEX=$2
-    export MQTT_BROKER_HOST
-    #$PYTHON Proc/python/pub.py ${TOPICINDEX}
-    LOG ${SUBTHIS}:終了
-    LOGTHIS=$ORGLOGTHIS
-}
+#PROC1B(){
+#    # ----------------------------------------------------------------------------------------------
+#    ORGLOGTHIS=$LOGTHIS
+#    SUBTHIS=PROC1B
+#    LOGTHIS=$(printf "%-10s:%-9s" ${THIS} ${SUBTHIS})
+#    LOG -------------------------------------------------------------
+#    LOG ${SUBTHIS}:開始 $1
+#    # ----------------------------------------------------------------------------------------------
+#    TOPICINDEX=$2
+#    export MQTT_BROKER_HOST
+#    #$PYTHON Proc/python/pub.py ${TOPICINDEX}
+#    LOG ${SUBTHIS}:終了
+#    LOGTHIS=$ORGLOGTHIS
+#}
 # --------------------------------------------------------------------------------------------------
 # 処理
 # --------------------------------------------------------------------------------------------------
-PROC1B(){
+PROC1A_SUB1(){
     # ----------------------------------------------------------------------------------------------
     ORGLOGTHIS=$LOGTHIS
-    SUBTHIS=PROC1B
+    SUBTHIS=PROC1A_SUB1
     LOGTHIS=$(printf "%-10s:%-9s" ${THIS} ${SUBTHIS})
     LOG -------------------------------------------------------------
     LOG ${SUBTHIS}:開始 $1 $2 $3
@@ -145,8 +162,27 @@ PROC1B(){
     LOGTHIS=$ORGLOGTHIS
     return $ERRNUM
 }
-# --------------------------------------------------------------------------------------------------
-
+PROC1A_SUB2(){
+    # ----------------------------------------------------------------------------------------------
+    ORGLOGTHIS=$LOGTHIS
+    SUBTHIS=PROC1A_SUB2
+    LOGTHIS=$(printf "%-10s:%-9s" ${THIS} ${SUBTHIS})
+    LOG -------------------------------------------------------------
+    LOG ${SUBTHIS}:開始 $1 $2 $3
+    # ----------------------------------------------------------------------------------------------
+    SCP=scp
+    SCP_CONNECT=${SCP_USER}@${SSH_HOST}
+    SCP_LOCAL_PATH=$1
+    SCP_REMOTE_PATH=$2
+    echo ${SCP} -r -i ${SCP_PRIVATE_KEY} ${SCP_LOCAL_PATH} ${SCP_USER}@${SSH_HOST}:${SCP_REMOTE_PATH}
+    ${SCP} -r -i ${SCP_PRIVATE_KEY} ${SCP_LOCAL_PATH} ${SCP_USER}@${SSH_HOST}:${SCP_REMOTE_PATH} 2>&1  | tee -a ${LOGFILE}
+    ERRNUM=${PIPESTATUS[0]}
+    LOG scp[${SSH_HOST}][RC=$ERRNUM]
+    # ----------------------------------------------------------------------------------------------
+    LOG ${SUBTHIS}:終了
+    LOGTHIS=$ORGLOGTHIS
+    return $ERRNUM
+}
 # --------------------------------------------------------------------------------------------------
 # 主処理
 # --------------------------------------------------------------------------------------------------
@@ -203,8 +239,9 @@ do
     
     case "$proc" in
         "PROC_A")
-            PROC0A
-        ;;
+            PROC1A;;
+        "PROC_B")
+            PROC1B;;
     esac
 done < ${WORK_FILELIST}
 IFS=$ORGIFS

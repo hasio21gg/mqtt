@@ -82,19 +82,18 @@ if __name__ == '__main__':
     message_topic = cmdUtils.get_command(cmdUtils.m_cmd_topic)
     message_string = cmdUtils.get_command(cmdUtils.m_cmd_message)
 
-    message_topic_recv = message_topic + "_recv"
+    #message_topic_recv = message_topic + "_recv"
 
     # Subscribe
-    #print("Subscribing to topic '{}'...".format(message_topic))
-    print("Subscribing to topic '{}'...".format(message_topic_recv))
+    print("Subscribing to topic '{}'...".format(message_topic))
+    #print("Subscribing to topic '{}'...".format(message_topic_recv))
     subscribe_future, packet_id = mqtt_connection.subscribe(
-    #    topic=message_topic,
-        topic=message_topic_recv,
+        topic=message_topic,
         qos=mqtt.QoS.AT_LEAST_ONCE,
         callback=on_message_received)
 
     subscribe_result = subscribe_future.result()
-    print("Subscribed with {}".format(str(subscribe_result['qos'])))
+    #print("Subscribed with {}{]".format(str(subscribe_result['qos'])))
 
     # Publish message to server desired number of times.
     # This step is skipped if message is blank.

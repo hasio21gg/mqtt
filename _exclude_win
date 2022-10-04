@@ -3,8 +3,10 @@ _include
 _exclude_win
 _include_win
 venv
-pub.sh
-config.sh
+.gitignore
+.gitkeep
+__pycache__
+*.sh
 crontab.txt
 filelist_proc1.txt
 .\Log

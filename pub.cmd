@@ -119,6 +119,7 @@ setlocal
 			CALL :PROC3A1 %%A %%B %%C %%D !SENDFILE! %%I
 			set /a LISTS+=1
 		)
+    	set PROCNAME=PROC3A
 		CALL :MSGPROC [リスト件数:!LISTS!][ファイル数:!RETCNTS!]
 		::■パブリッシュ
 		IF !LISTS! EQU !RETCNTS! (
@@ -126,6 +127,7 @@ setlocal
 			CALL :PROC3A2 !SENDFILE!
 		)
 		ECHO !RC!
+    	set PROCNAME=PROC3A
 		IF !RC! NEQ 0 (
 			CALL :MSGPROC ERROR_PUBLISHED.[%_SUBSC_%][!RC!]
 			mv !SENDFILE! %$ERRDATA%
@@ -185,6 +187,7 @@ setlocal
 	:: MQTT パブリッシュ
 	:: AWS IoT Core トピックへの送信
 	::----------------------------------------------------------------------------
+	set PROCNAME=PROC3A2
 	set PY=pub1.py
 	set SENDFILE=%1
 	set ENDP=--endpoint %$MQTT_BROKER_HOST%
@@ -196,13 +199,14 @@ setlocal
 	set PROXY=--proxy_host %$MQTT_BROKER_PROXY%
 	set PROXY_PORT=--proxy_port %$MQTT_BROKER_PROXY_PORT%
 	set CLIENT=--client_id %COMPUTERNAME%
+	set PYLOG=--logfile %$LOG%%PY%.log
 	CALL :MSGPROC %PY%
 	IF "%$MQTT_BROKER_PROXY%" EQU "" (
-		CALL :MSGPROC ====NO_PROXY====
-		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %SEND% %CLIENT%
+		CALL :MSGPROC ======_NO_PROXY_==================================================================
+		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %SEND% %CLIENT% %PYLOG%
 	) ELSE (
-		CALl :MSGPROC ====USE_PROXY====
-		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %SEND% %CLIENT%
+		CALl :MSGPROC ======USE_PROXY_==================================================================
+		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %SEND% %CLIENT% %PYLOG%
 	)
 	CALL :MSGPROC %PUBCMD%
 	%PUBCMD%

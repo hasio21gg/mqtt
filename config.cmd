@@ -52,14 +52,15 @@
     set $DBR_RECV=D:\ap99999\mqtt\RecvPath\
     set $DBR_SUBSC_SEND=%$DBR_SEND%SUBSC\
     set $DBR_SUBSC_RECV=%$DBR_RECV%SUBSC\
+    :: Docker MQTT
     set $MQTT_BROKER_HOST=localhost
     set $MQTT_BROKER_PORT=8883
     set $MQTT_BROKER_PROXY=
     set $MQTT_BROKER_PROXY_PORT=
-    set $MQTT_CA__FILE=%$ROOT%ca.crt
-    set $MQTT_KEY_FILE=%$ROOT%broker.key
-    set $MQTT_CERTFILE=%$ROOT%broker.crt
-    
+    set $MQTT_CA__FILE=%$ROOT%.certs\ca.crt
+    set $MQTT_KEY_FILE=%$ROOT%.certs\broker.key
+    set $MQTT_CERTFILE=%$ROOT%.certs\broker.crt
+    ::AWS MQTT
     set $MQTT_BROKER_HOST=%$AWS_MQTT_ENDPOINT_DEV%
     set $MQTT_BROKER_PROXY=%$STHDG_PROXY%
     set $MQTT_BROKER_PROXY_PORT=%$STHDG_PROXY_PORT%
@@ -69,7 +70,7 @@
     goto CONFIG_1
 :D09068
     echo ================================================================================
-    echo ■端末別設定
+    echo ■端末別設定(OPC1)
     set $SRCLOC=\\192.168.254.96
     set $DBR_SEND=D:\Dbrg\AutoTransfer\SendPath\
     set $DBR_RECV=D:\Dbrg\AutoTransfer\RecvPath\
@@ -78,7 +79,7 @@
     goto CONFIG_1
 :D08757
     echo ================================================================================
-    echo ■端末別設定
+    echo ■端末別設定(IPC1)
     set $DBR_RECV=D:\Dbrg\AutoTransfer\RecvPath\
     set $DBR_SUBSC_RECV=%$DBR_RECV%SUBSC\
     set $MQTT_BROKER_HOST=%$AWS_MQTT_ENDPOINT_DEV%

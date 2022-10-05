@@ -1,4 +1,5 @@
 venv
+venvwin
 /Log/**
 !/Log/**/
 !/Log/**/.gitkeep
@@ -9,5 +10,11 @@ venv
 !/Data/Temp/**/
 !/Data/Temp/**/.gitkeep
 
+.certs/**
+!.certs/**
+!.certs/**/.gitkeep
+
 !.gitignore
 !.gitkeep
+__pycache__
+

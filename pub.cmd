@@ -21,6 +21,8 @@ setlocal
 	if "%2" NEQ "" set JOBLOG=%$LOG%%FMTDATE%_%~n0.%1_%2.log
 	if "%3" NEQ "" set JOBLOG=%$LOG%%FMTDATE%_%~n0.%1_%2_%3.log
 
+	CALL %$ACTIVATE%
+	
 	set $MOVE=MOVE
 	::set $MOVE=echo ■MOVE
 	echo ================================================================================
@@ -48,7 +50,7 @@ setlocal
 	CALL :PROC3A %SUBSC%
 
 	set SUBSC=PROC1A
-	::CALL :PROC3A %SUBSC%
+	CALL :PROC3A %SUBSC%
     
 	cscript %$ROOT%UtyMoveFile.vbs %$RECVBK% -1
 	cscript %$ROOT%UtyDirDelete.vbs %$RECVBK% -10
@@ -130,11 +132,12 @@ setlocal
     	set PROCNAME=PROC3A
 		IF !RC! NEQ 0 (
 			CALL :MSGPROC ERROR_PUBLISHED.[%_SUBSC_%][!RC!]
-			mv !SENDFILE! %$ERRDATA%
+			move !SENDFILE! %$ERRDATA%
 			goto PROC3A_END
 		)
 		::使用済みワークは削除する
-		IF EXIST !SENDFILE! del /Q !SENDFILE!
+		IF EXIST !SENDFILE! cscript %$ROOT%UtyFileBackUp.vbs !SENDFILE! %$SENDBK%
+		::IF EXIST !SENDFILE! del /Q !SENDFILE!
     	::DBR受信トリガーファイルを移動する
 		set RECVFILE=%$DBR_SUBSC_RECV%%%I
 		cscript %$ROOT%UtyFileBackUp.vbs !RECVFILE! %$RECVBK%
@@ -172,6 +175,7 @@ setlocal
 	SET /a WAITS=%WAITS%+%PROC3A1_WAIT%
 	goto PROC3A1_WAIT
 :PROC3A1_EXCEPT
+	ECHO %RESPATH%%RESFILE%
 	CALL :MSGPROC TIMEOUT_PROC3A1
 	set RETCNT=0
 	goto :EOF
@@ -393,7 +397,8 @@ setlocal
 	)
 	::
 	::echo CALL :GET_FILETIMESTAMP2 %SRC%%TGT% \\
-	CALL :GET_FILETIMESTAMP2 %SRC%%TGT% \\
+	::CALL :GET_FILETIMESTAMP2 %SRC%%TGT% \\
+	CALL :GET_FILETIMESTAMP3 %SRC%%TGT% \\
 	ECHO %_TGT_%,%GETFILETIMESTAMP%>>%_WTM_%
 	::pause
 	::CALL :MSGPROC GETFILEPATH:%GETFILEPATH%
@@ -499,6 +504,8 @@ setlocal
 	::TGT:20220617_406ｶﾈﾂﾊｯﾎﾟｳｻﾞｲ\2022-09-15_10-52-00-1230.bfz\Input0_Camera10.jpg
 	FOR /F "tokens=1,2,3,4 delims=\" %%I IN ("%1\%2") DO set TOPIC1=%%I&&set TOPIC2=%%J&& set TOPIC3=%%L
 	CALL set TOPIC1=%%TOPIC1:%BEF_PROC2B_TOPIC1_001%=%AFT_PROC2B_TOPIC1_001%%%
+	::8文字_　は8文字日付と判断し除去する
+	echo %TOPIC2% | findstr [0-2][0-9][0-9][0-9][0-1][0-9][0-3][0-9]_ > nul && set TOPIC2=%TOPIC2:~9%
 	CALL set TOPIC2=%%TOPIC2:%BEF_PROC2B_TOPIC2_001%=%AFT_PROC2B_TOPIC2_001%%%
 	CALL set TOPIC2=%%TOPIC2:%BEF_PROC2B_TOPIC2_002%=%AFT_PROC2B_TOPIC2_002%%%
 	CALL set TOPIC2=%%TOPIC2:%BEF_PROC2B_TOPIC2_003%=%AFT_PROC2B_TOPIC2_003%%%
@@ -507,6 +514,7 @@ setlocal
 	CALL set TOPIC2=%%TOPIC2:%BEF_PROC2B_TOPIC2_006%=%AFT_PROC2B_TOPIC2_006%%%
 	CALL set TOPIC2=%%TOPIC2:%BEF_PROC2B_TOPIC2_007%=%AFT_PROC2B_TOPIC2_007%%%
 	CALL set TOPIC2=%%TOPIC2:%BEF_PROC2B_TOPIC2_008%=%AFT_PROC2B_TOPIC2_008%%%
+	::
 	CALL set TOPIC3=%%TOPIC3:%BEF_PROC2B_TOPIC3_001%=%AFT_PROC2B_TOPIC3_001%%%
 	CALL set TOPIC3=%%TOPIC3:%BEF_PROC2B_TOPIC3_002%=%AFT_PROC2B_TOPIC3_002%%%
 	::CALL set TOPIC3=%%TOPIC3:%BEF_PROC2B_TOPIC3_001%=%AFT_PROC2B_TOPIC3_001%%%
@@ -551,6 +559,12 @@ setlocal
 	set FF=%GETFILENAME%
 	set DD=%2%GETFILEPATH%
 	goto GET_FILETIMESTAMP
+:GET_FILETIMESTAMP3
+	CALL :GET_FILENAME %1
+	CALL :GET_FILEPATH %1
+	set FF=%GETFILENAME%
+	set DD=%2%GETFILEPATH%
+	goto GET_FILETIMESTAMP_PSE
 :GET_FILETIMESTAMP
 	set GETFILETIMESTAMP=
 	for /F "tokens=2,3" %%I in ('where /R %DD% /T %FF%') do set STAMP=%%I_%%J
@@ -558,6 +572,18 @@ setlocal
 	set STAMP=%STAMP:_=%
 	set STAMP=%STAMP:/=%
 	set STAMP=%STAMP::=%
+	set GETFILETIMESTAMP=%STAMP%
+	goto :EOF
+:GET_FILETIMESTAMP_PSE
+	set GETFILETIMESTAMP=
+	set PSF=%$PROC%powershell\where.ps1
+	set WHERE=%$PSE% %PSF% %FF% %DD%
+	for /F "tokens=2,3" %%I in ('%WHERE%') do set STAMP=%%I_%%J
+	echo %STAMP% | findstr _[0-9]: > nul && set STAMP=%STAMP:_=_0%
+	set STAMP=%STAMP:_=%
+	set STAMP=%STAMP:/=%
+	set STAMP=%STAMP::=%
+	set STAMP=%STAMP:.=%
 	set GETFILETIMESTAMP=%STAMP%
 	goto :EOF
 :GET_LOCALTIMESTAMP
@@ -644,3 +670,5 @@ setlocal
 	exit
 :ENDPROC
 	::----------------------------------------------------------------------------
+	CALL %$DEACTIVATE%
+	%$EXIT_CMD%

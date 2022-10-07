@@ -12,4 +12,6 @@ filelist_proc1.txt
 .\Log
 .\Data
 .\Proc\c
+.\Proc\Docker
 .\.vscode
+\Pgm\01_AWS

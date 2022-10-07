@@ -81,27 +81,39 @@ PROC1A(){
         rm -rf ${SENDLIST}
     fi
     
+    #監視ディレクトリのファイル一覧取得しループする
     while read -r file; do
+        #タイムスタンプ1:年月日時分秒
         ts1=`date +%Y%m%d%H%M%S -r ${file}`
+        #タイムスタンプ2:年月日時分秒ミリ3桁
         ts2=`date +%Y%m%d%H%M%S%3N -r ${file}`
-        echo -e ${DBRG_RECV_PATH//\\/\\\\}${LOGIC_PATH//\//\\\\},`basename ${file}`,${LV1},"DATA",${ts1},${ts2}\\r>> ${SENDLIST}
-        mv -f  ${file} ${TEMPO_DEST_DIR}
+        #送信ファイル一覧を作成する
+        # 01:DBRG(データブリッジ)での受信フォルダ
+        # 02:DBRG受信ファイル名
+        # 03:拠点別コード(DBRGに作成済フォルダでサービス認識されていること)
+        # 04:データ種別
+        # 05:タイムスタンプ1:年月日時分秒
+        # 06:タイムスタンプ2:年月日時分秒ミリ3桁
+        # 07:MQTTトピック
+        echo -e ${DBRG_RECV_PATH//\\/\\\\}${LOGIC_PATH//\//\\\\}\\\\,${ts2}_`basename ${file}`,${LV1},"DATA",${ts1},${ts2},${LOGIC_PATH,,}\\r>> ${SENDLIST}
+        #TEMPへ移動送信する
+        mv -f  ${file} ${TEMPO_DEST_DIR}${ts2}_`basename ${file}`
         idx=$((idx+1))
     done < <(find ${WATCH_PATH} -name "${pattern}" -maxdepth 1)
-    LOG mv[元][${WATCH_PATH}]
-    LOG mv[先][${TEMPO_DEST_DIR}]
     # ----------------------------------------------------------------------------------------------
     if [ $idx -gt 0 ]; then
+        LOG mv[元][${WATCH_PATH}]
+        LOG mv[先][${TEMPO_DEST_DIR}]
         # 再帰でファイルを送信する
         PROC1A_SUB1 ${TEMPO_DIR} ${LV1} ${LV2} || PROC1A_EX1
         PROC1A_SUB2 ${SENDLIST} ${SCP_REMOTE_SUBSC}|| PROC1A_EX1
+        ./UtyFileBackup.sh ${SENDLIST} ${SENDBK_DIR} | tee -a ${LOGFILE}
     fi
     # ----------------------------------------------------------------------------------------------
     #BACKUPD=`date "+%Y%m%d%H%M%S"`
     #mv ${SENDLIST} ${SENDBK_DIR}${BACKUPD}_`basename ${SENDLIST}`
-    ./UtyFileBackup.sh ${SENDLIST} ${SENDBK_DIR}
-    ./UtyMoveFile.sh ${SENDBK_DIR} -1
-    ./UtyDirDelete.sh ${SENDBK_DIR} -10
+    ./UtyMoveFile.sh ${SENDBK_DIR} -1 | tee -a ${LOGFILE}
+    ./UtyDirDelete.sh ${SENDBK_DIR} -10 | tee -a ${LOGFILE}
     LOG ${SUBTHIS}:終了[$idx][$?]
     LOGTHIS=$ORGLOGTHIS
 }
@@ -147,12 +159,12 @@ PROC1A_SUB1(){
     LOG -------------------------------------------------------------
     LOG ${SUBTHIS}:開始 $1 $2 $3
     # ----------------------------------------------------------------------------------------------
-    LVL1=$2
-    LVL2=$3
-    SCP=scp
-    SCP_CONNECT=${SCP_USER}@${SSH_HOST}
-    SCP_LOCAL_PATH=$1$LVL1/$LVL2/
-    REMOTE_ROOT=$LVL1
+    local LVL1=$2
+    local LVL2=$3
+    local SCP=scp
+    local SCP_CONNECT=${SCP_USER}@${SSH_HOST}
+    local SCP_LOCAL_PATH=$1$LVL1/$LVL2/
+    local REMOTE_ROOT=$LVL1
     echo ${SCP} -r -i ${SCP_PRIVATE_KEY} ${SCP_LOCAL_PATH} ${SCP_USER}@${SSH_HOST}:${SCP_REMOTE_PATH}${REMOTE_ROOT}
     ${SCP} -r -i ${SCP_PRIVATE_KEY} ${SCP_LOCAL_PATH} ${SCP_USER}@${SSH_HOST}:${SCP_REMOTE_PATH}${REMOTE_ROOT} 2>&1  | tee -a ${LOGFILE}
     ERRNUM=${PIPESTATUS[0]}
@@ -170,13 +182,13 @@ PROC1A_SUB2(){
     LOG -------------------------------------------------------------
     LOG ${SUBTHIS}:開始 $1 $2 $3
     # ----------------------------------------------------------------------------------------------
-    SCP=scp
-    SCP_CONNECT=${SCP_USER}@${SSH_HOST}
-    SCP_LOCAL_PATH=$1
-    SCP_REMOTE_PATH=$2
+    local SCP=scp
+    local SCP_CONNECT=${SCP_USER}@${SSH_HOST}
+    local SCP_LOCAL_PATH=$1
+    local SCP_REMOTE_PATH=$2
     echo ${SCP} -r -i ${SCP_PRIVATE_KEY} ${SCP_LOCAL_PATH} ${SCP_USER}@${SSH_HOST}:${SCP_REMOTE_PATH}
     ${SCP} -r -i ${SCP_PRIVATE_KEY} ${SCP_LOCAL_PATH} ${SCP_USER}@${SSH_HOST}:${SCP_REMOTE_PATH} 2>&1  | tee -a ${LOGFILE}
-    ERRNUM=${PIPESTATUS[0]}
+    local ERRNUM=${PIPESTATUS[0]}
     LOG scp[${SSH_HOST}][RC=$ERRNUM]
     # ----------------------------------------------------------------------------------------------
     LOG ${SUBTHIS}:終了

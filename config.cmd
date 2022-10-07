@@ -29,13 +29,14 @@
 	set FMTDATE=%DT:~0,4%%DT:~5,2%%DT:~8,2%
 	set FMTTIME=%TM:~0,2%%TM:~3,2%%TM:~6,2%
 	set JOBDATE=%DT:~0,4%%DT:~5,2%%DT:~8,2%_%FMTTIME%
-    set PROC3A1_WAIT=1
-    set PROC3A1_MAXWAIT=1
+    set PROC3A1_WAIT=10
+    set PROC3A1_MAXWAIT=5
     set $AWS_MQTT_ENDPOINT_DEV=a2kihu57t8ntyn-ats.iot.ap-northeast-1.amazonaws.com
     set $AWS_MQTT_ENDPOINT_STG=a3knk8fpg0o81-ats.iot.ap-northeast-1.amazonaws.com
     set $AWS_MQTT_ENDPOINT_PRD=a2mwtccjyq0i11-ats.iot.ap-northeast-1.amazonaws.com
     set $STHDG_PROXY=proxy.sthdg.local
     set $STHDG_PROXY_PORT=8080
+    set $PSE=powershell -File
     IF NOT EXIST "%$RECVBK%\*" (
         mkdir %$RECVBK%
     )
@@ -47,6 +48,9 @@
 :D08591
     echo ================================================================================
     echo Å°í[ññï ê›íË
+    set $EXIT_CMD=echo EXIT
+    set $ACTIVATE=%$ROOT%venvwin\Scripts\activate.bat
+    set $DEACTIVATE=%$ROOT%venvwin\Scripts\deactivate.bat
     set $SRCLOC=\\192.168.254.96
     set $DBR_SEND=D:\ap99999\mqtt\SendPath\
     set $DBR_RECV=D:\ap99999\mqtt\RecvPath\
@@ -71,6 +75,7 @@
 :D09068
     echo ================================================================================
     echo Å°í[ññï ê›íË(OPC1)
+    set $EXIT_CMD=EXIT
     set $SRCLOC=\\192.168.254.96
     set $DBR_SEND=D:\Dbrg\AutoTransfer\SendPath\
     set $DBR_RECV=D:\Dbrg\AutoTransfer\RecvPath\
@@ -80,6 +85,9 @@
 :D08757
     echo ================================================================================
     echo Å°í[ññï ê›íË(IPC1)
+    set $EXIT_CMD=EXIT
+    set $ACTIVATE=%$ROOT%venvwin\Scripts\activate.bat
+    set $DEACTIVATE=%$ROOT%venvwin\Scripts\deactivate.bat
     set $DBR_RECV=D:\Dbrg\AutoTransfer\RecvPath\
     set $DBR_SUBSC_RECV=%$DBR_RECV%SUBSC\
     set $MQTT_BROKER_HOST=%$AWS_MQTT_ENDPOINT_DEV%
@@ -93,23 +101,33 @@
 :CONFIG_1
     ::TEST
     set BEF_PROC2B_TOPIC1_001=20220705_PM_ì‡
-    set AFT_PROC2B_TOPIC1_001=03c
-    set BEF_PROC2B_TOPIC2_001=20220617_405∂»¬ ØŒﬂ≥ªﬁ≤
+    set AFT_PROC2B_TOPIC1_001=03a
+    ::
+    ::set BEF_PROC2B_TOPIC2_001=20220617_405∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_001=405∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_001=b0001
-    set BEF_PROC2B_TOPIC2_002=20220617_406∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_002=20220617_406∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_002=406∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_002=b0002
-    set BEF_PROC2B_TOPIC2_003=20220617_407∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_003=20220617_407∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_003=407∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_003=b0003
-    set BEF_PROC2B_TOPIC2_004=20220617_408∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_004=20220617_408∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_004=408∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_004=b0004
-    set BEF_PROC2B_TOPIC2_005=20220617_409∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_005=20220617_409∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_005=409∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_005=b0005
-    set BEF_PROC2B_TOPIC2_006=20220617_410∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_006=20220617_410∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_006=410∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_006=b0006
-    set BEF_PROC2B_TOPIC2_007=20220617_411∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_007=20220617_411∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_007=411∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_007=b0007
-    set BEF_PROC2B_TOPIC2_008=20220617_412∂»¬ ØŒﬂ≥ªﬁ≤
+    ::set BEF_PROC2B_TOPIC2_008=20221005_405∂»¬ ØŒﬂ≥ªﬁ≤
+    set BEF_PROC2B_TOPIC2_008=405∂»¬ ØŒﬂ≥ªﬁ≤
     set AFT_PROC2B_TOPIC2_008=b0008
+    ::
     set BEF_PROC2B_TOPIC3_001=Input0_Camera
     set AFT_PROC2B_TOPIC3_001=dl
     set BEF_PROC2B_TOPIC3_002=.jpg

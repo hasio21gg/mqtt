@@ -52,6 +52,7 @@ def lambda_handler(event, context):
             "CLIENTID"    : event["clientid"],
             "RESPATH"     : event["RESPATH"],
             "RESFILE"     : event["RESFILE"],
+            "RECVTOPIC"   : event["RECVTOPIC"],
             "PRESIGNEDURL": presigned_url
         }
         #

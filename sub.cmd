@@ -20,6 +20,8 @@ setlocal
 	if "%2" NEQ "" set JOBLOG=%$LOG%%FMTDATE%_%~n0.%1_%2.log
 	if "%3" NEQ "" set JOBLOG=%$LOG%%FMTDATE%_%~n0.%1_%2_%3.log
 
+	CALL %$ACTIVATE%
+
 	set $MOVE=MOVE
 	::set $MOVE=echo Å°MOVE
 	echo ================================================================================
@@ -65,15 +67,15 @@ setlocal
 	set PROXY_PORT=--proxy_port %$MQTT_BROKER_PROXY_PORT%
 	set CLIENT=--client_id %COMPUTERNAME%_%PROCNAME%_%_SUBSC_%
 	set TOPIC=--topic %_SUBSC_%
-	set MSG=--message STOP
+	set MSG=--message STOP,%COMPUTERNAME%
 	set PYLOG=--logfile %$LOG%%PY%.log
 	CALL :MSGPROC %PY%
 	IF "%$MQTT_BROKER_PROXY%" EQU "" (
 		CALL :MSGPROC ======_NO_PROXY_==================================================================
-		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG%
+		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG% %MSG%
 	) ELSE (
 		CALl :MSGPROC ======USE_PROXY_==================================================================
-		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG%
+		set PUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG% %MSG%
 	)
 	CALL :MSGPROC %PUBCMD%
 	%PUBCMD%
@@ -103,13 +105,14 @@ setlocal
 	set CLIENT=--client_id %COMPUTERNAME%_%PROCNAME%_%_SUBSC_%
 	set TOPIC=--topic %_SUBSC_%
 	set PYLOG=--logfile %$LOG%%PY%.log
+	set BKDIR=--backupdir %$SENDBK%
 	CALL :MSGPROC %PY%
 	IF "%$MQTT_BROKER_PROXY%" EQU "" (
 		CALL :MSGPROC ======_NO_PROXY_==================================================================
-		set SUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG%
+		set SUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG% %BKDIR%
 	) ELSE (
 		CALl :MSGPROC ======USE_PROXY_==================================================================
-		set SUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG%
+		set SUBCMD=%$PYTHON% %$PYTHONPROC%mqtt\%PY% %ENDP% %PROXY% %PROXY_PORT% %CAFI% %KEYF% %CERT% %CLIENT% %TOPIC% %PYLOG% %BKDIR%
 	)
 	CALL :MSGPROC %SUBCMD%
 	%SUBCMD%
@@ -171,3 +174,5 @@ setlocal
 	exit
 :ENDPROC
 	::----------------------------------------------------------------------------
+	CALL %$DEACTIVATE%
+	%$EXIT_CMD%

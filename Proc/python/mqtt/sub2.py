@@ -10,6 +10,7 @@
 # 001   2022-09-30 ver.1.0.0   202208R062  初版                                       橋本　英雄
 ####################################################################################################
 # -*- coding: utf-8 -*-
+import shutil
 from awscrt import mqtt
 import sys
 import threading
@@ -25,6 +26,7 @@ import requests
 import logging
 from logging import Formatter
 import logging.handlers
+import datetime
 ####################################################################################################
 # Parse arguments
 import command_line_utils;
@@ -40,8 +42,8 @@ cmdUtils.register_command("client_id", "<str>", "Client ID to use for MQTT conne
 cmdUtils.register_command("count", "<int>", "The number of messages to send (optional, default='10').", default=10, type=int)
 ####################################################################################################
 # User's Custumize★
-cmdUtils.register_command("logfile" , "<path>", "★ログファイルを指定する", True,str)
-
+cmdUtils.register_command("logfile"   , "<path>", "★ログファイルを指定する", True,str)
+cmdUtils.register_command("backupdir" , "<path>", "★バックアップフォルダを指定する", True,str)
 
 ####################################################################################################
 # Needs to be called so the command utils parse the commands
@@ -66,7 +68,7 @@ h1 = logging.handlers.TimedRotatingFileHandler(
 formatter = Formatter('%(asctime)s [%(levelname)-8s][%(lineno)06d] %(message)s',datefmt='%Y/%m/%d %H:%M:%S')
 h0.setFormatter(formatter)
 h1.setFormatter(formatter)
-h0.setLevel(logging.INFO)
+h0.setLevel(logging.DEBUG)
 h1.setLevel(logging.DEBUG)
 log.addHandler(h0)
 log.addHandler(h1)
@@ -118,15 +120,34 @@ def on_message_received(topic, payload, dup, qos, retain, **kwargs):
         # サブスクリプション強制終了指示トピックを受信した場合
         ############################################################################################
         log.info("Subscribe force exit topic:{}".format(topic))
-        global received_count
-        received_all_event.set()
+        message_dict = json.loads(payload)
+        COM1 = os.environ['COMPUTERNAME']
+        COM2 = message_dict['COMPUTERNAME']
+        OPE  = message_dict['OPERATE']
+        if COM1 == COM2 and OPE == "STOP":
+                log.info(f'Subscribe Operation!:{OPE} From:{COM2} To:{COM1}')
+                global received_count
+                received_all_event.set()
+        else:
+            log.info(f'Ignored Subscribe Operation!:{OPE} From:{COM2} To:{COM1}')
     else:
         ############################################################################################
         # 
         ############################################################################################
         log.info("Force closing topic is {}" . format(force_exit_topic))
         message_dict = json.loads(payload)
-        upload_s3(message_dict["PRESIGNEDURL"],"{}{}".format(message_dict["RESPATH"],message_dict["RESFILE"]))
+        filepath     = "{}{}".format(message_dict["RESPATH"],message_dict["RESFILE"])
+        sendurl      = message_dict["PRESIGNEDURL"]
+        recv         = re.sub('[\-\*\+\/]','_', message_dict["RECVTOPIC"])
+        dt_now       = datetime.datetime.now()
+        backupfile   = "{}{}_{}_{}".format(
+            cmdUtils.get_command("backupdir"),
+            dt_now.strftime('%Y%m%d%H%M%S'),
+            recv,
+            os.path.basename(filepath)
+        )
+        upload_s3(sendurl, filepath)
+        filebackup(filepath, backupfile)
 
 ####################################################################################################
 #  S3署名付きURLを使ってファイルをアップロードする
@@ -137,6 +158,16 @@ def upload_s3(url,sendfile):
         o = f.read()
     r = requests.put(url, data=o, proxies=proxies)
     log.info(r.status_code)
+
+####################################################################################################
+#  アップロード済ファイルを退避する
+# 
+####################################################################################################
+def filebackup(sendfile, backupfile):
+    os.makedirs(os.path.dirname(backupfile), exist_ok=True)
+    print("{}-{}".format(sendfile, backupfile))
+    sended = shutil.move(sendfile, backupfile)
+    log.info(sended)
 
 ####################################################################################################
 # 主処理部

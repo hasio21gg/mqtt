@@ -19,9 +19,9 @@ import json
 import logging
 from logging import Formatter
 import logging.handlers
+import datetime
 ####################################################################################################
 #Custom
-
 
 
 ####################################################################################################
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     #
     ################################################################################################
-    message_count = cmdUtils.get_command("count")
+    #message_count = cmdUtils.get_command("count")
     message_topic = cmdUtils.get_command(cmdUtils.m_cmd_topic)
     message_string = cmdUtils.get_command(cmdUtils.m_cmd_message)
 
@@ -146,17 +146,25 @@ if __name__ == '__main__':
     # This step loops forever if count was set to 0.
     ################################################################################################
     if message_string:
-        if message_count == 0:
-            log.info ("Sending messages until program killed")
-        else:
-            log.info ("Sending {} message(s)".format(message_count))
+        #if message_count == 0:
+        #    log.info ("Sending messages until program killed")
+        #else:
+        #    log.info ("Sending {} message(s)".format(message_count))
+        print(message_string)
+        (m1, m2) = str(message_string).split(',')
+        dt_now       = datetime.datetime.now()
+        message_json = {
+            "COMPUTERNAME": m2,
+            "OPERATE"     : m1,
+            "OPEDATE"     : dt_now.strftime('%Y%m%d%H%M%S')
+        }
 
-        message = "{}".format(message_string)
-        log.info("Publishing message to topic '{}': {}".format(message_topic, message))
-        message_json = json.dumps(message)
+        log.info("Publishing message to topic '{}': {}".format(message_topic, message_string))
+        #message_json = json.dumps(message)
+        #message_json = json.dumps(dict)
         mqtt_connection.publish(
             topic=message_topic,
-            payload=message_json,
+            payload=json.dumps(message_json),
             qos=mqtt.QoS.AT_LEAST_ONCE)
         
         time.sleep(1)

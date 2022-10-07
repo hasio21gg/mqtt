@@ -2,6 +2,9 @@
 ;|FTYPE     |FKUBUN      |FPATERN           |FPATH           |FRECUR  |FTIME             |FTOPIC      |
 ;|----------|------------|------------------|----------------|--------|------------------|------------|
 PROC2A,DATA,foo_[0-9][0-9][0-9].jpeg,03A\C\DL1,N,N,FT02
-;PROC2A,META,foo_[0-9][0-9][0-9].csv,03A\C\DL1,N,N,FT02
-PROC2A,DATA,Input[0-9]_Camera[0-9][0-9]*.jpg,20220705_PM_“à,Y,FT01,FT03
+PROC2A,META,foo_[0-9][0-9][0-9].txt,03A\A\DL1,N,N,FT02
+PROC2A,META,bar_[0-9][0-9][0-9].txt,03A\B\DL1,N,N,FT02
+PROC2A,META,baz_[0-9][0-9][0-9].txt,03A\A\DL1,N,N,FT02
+PROC2A,DATA,Input[0-9]_Camera[0-9][0-9]*.jpg,20220705_PM_“à,Y,N,FT03
+;PROC2A,DATA,Input[0-9]_Camera[0-9][0-9]*.jpg,20220705_PM_“à,Y,FT01,FT03
 ;PROC2A,SLUDGE,Input[0-9]_Camera[0-9][0-9]*.bmp,20220705_PM_“à,Y,FT01,FT03

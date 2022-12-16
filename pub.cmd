@@ -54,6 +54,10 @@ setlocal
     
 	cscript %$ROOT%UtyMoveFile.vbs %$RECVBK% -1
 	cscript %$ROOT%UtyDirDelete.vbs %$RECVBK% -10
+	cscript %$ROOT%UtyMoveFile.vbs %$SENDBK% -1
+	cscript %$ROOT%UtyDirDelete.vbs %$SENDBK% -30
+	cscript %$ROOT%UtyMoveFile.vbs %$LOG% -1
+	cscript %$ROOT%UtyDirDelete.vbs %$LOG% -10
 	
 	set PROCNAME=PROC3
     goto ENDPROC
@@ -246,12 +250,19 @@ setlocal
     set PROCNAME=PROC2
 	IF %LISTCOUNT% EQU 0 (
 		CALL :MSGPROC FILELIST_RECORDS_NOT_FOUND.
-		goto ENDPROC
+		goto PROC2_END
 	)
 	IF "%FTYPE%" EQU "" (
 		CALL :MSGPROC ERROR!!
 		EXIT /B 9
 	)
+:PROC2_END
+	cscript %$ROOT%UtyMoveFile.vbs %$RECVBK% -1
+	cscript %$ROOT%UtyDirDelete.vbs %$RECVBK% -10
+	cscript %$ROOT%UtyMoveFile.vbs %$SENDBK% -1
+	cscript %$ROOT%UtyDirDelete.vbs %$SENDBK% -30
+	cscript %$ROOT%UtyMoveFile.vbs %$LOG% -1
+	cscript %$ROOT%UtyDirDelete.vbs %$LOG% -10
     goto ENDPROC
 :PROC2A
 	echo ================================================================================
@@ -479,7 +490,7 @@ setlocal
 
 	set FTXX_TIMESTAMP=%_MTI_%
 	IF "%FTIME%" NEQ "N" (
-		CALL :%FTIME% %TGT% 2
+		CALL :%FTIME% %TGT% 2 %_MTI_%
 	)
 	set FTXX_TOPIC=TOPIC
 	IF "%FTOPIC%" NEQ "N" (
@@ -492,6 +503,7 @@ setlocal
 ::
 :: --------------------------------------------------------------------------------
 :FT02
+	::FTXX_TOPIC
 	::DST:03A\C\DL1
 	::TGT:foo_001.jpeg
 	FOR /F "tokens=1,2,3,4 delims=\" %%I IN ("%1\%2") DO set TOPIC1=%%I&& set TOPIC2=%%J&& set TOPIC3=%%L
@@ -499,7 +511,15 @@ setlocal
 	CALL set TOPIC3=%%TOPIC3:%BEF_PROC2B_TOPIC3_004%=%AFT_PROC2B_TOPIC3_004%%%
 	set FTXX_TOPIC=%TOPIC1%/%TOPIC2%/%TOPIC3%/
 	goto :EOF
+:FT04
+	::FTXX_TOPIC
+	::DST:03A\A01\DL1
+	::TGT:OK__Default_Work_2_Item_1_20221020_173351.jpg
+	FOR /F "tokens=1,2,3,4 delims=\" %%I IN ("%1\%2") DO set TOPIC1=%%I&& set TOPIC2=%%J&& set TOPIC3=%%K
+	set FTXX_TOPIC=%TOPIC1%/%TOPIC2%/%TOPIC3%/
+	goto :EOF
 :FT03
+	::FTXX_TOPIC
 	::DST:20220705_PM_撪
 	::TGT:20220617_406度率叱晦瞈2022-09-15_10-52-00-1230.bfz\Input0_Camera10.jpg
 	FOR /F "tokens=1,2,3,4 delims=\" %%I IN ("%1\%2") DO set TOPIC1=%%I&&set TOPIC2=%%J&& set TOPIC3=%%L
@@ -530,6 +550,7 @@ setlocal
 	set FTXX_TOPIC=%TOPIC1%/%TOPIC2%/%TOPIC3%/
 	goto :EOF
 :FT01
+	::TGT:20220617_406度率叱晦瞈2022-09-15_10-52-00-1230.bfz\Input0_Camera10.jpg
 	FOR /F "tokens=%2 delims=\" %%I IN ("%1") DO SET STAMP=%%I
 	echo 仭%STAMP%
 	set STAMP=%STAMP:.bfz=%
@@ -538,6 +559,21 @@ setlocal
 	set STAMP=%STAMP:/=%
 	set STAMP=%STAMP::=%
 	set FTXX_TIMESTAMP=%STAMP%
+	goto :EOF
+:FT05
+	set IN01=%1
+	set IN01=%IN01:__=_0_%
+	set TMI=%3
+	::TGT:OK__Default_Work_2_Item_1_20221020_173351.jpg
+	::20221007181519605
+	FOR /F "tokens=8,9 delims=_" %%I IN ("%IN01%") DO SET STAMP=%%I%%J
+	echo 仭%STAMP%,%TMI%
+	set STAMP=%STAMP:.jpg=%
+	set TMI=%TMI%000
+	set TMI=%TMI:~14,3%
+	set STAMP=%STAMP%000
+	set STAMP=%STAMP:~0,14%
+	set FTXX_TIMESTAMP=%STAMP%%TMI%
 	goto :EOF
 :GET_SENDHEAD
 	set _NAME_=%1

@@ -100,9 +100,11 @@
     goto CONFIG_1
 :CONFIG_1
     ::TEST
+    ::--------------------------------------------------
+    ::FT03
+    ::--------------------------------------------------
     set BEF_PROC2B_TOPIC1_001=20220705_PM_“à
     set AFT_PROC2B_TOPIC1_001=03a
-    ::
     ::set BEF_PROC2B_TOPIC2_001=20220617_405¶ÈÂÊ¯Îß³»Þ²
     set BEF_PROC2B_TOPIC2_001=405¶ÈÂÊ¯Îß³»Þ²
     set AFT_PROC2B_TOPIC2_001=b0001
@@ -127,7 +129,9 @@
     ::set BEF_PROC2B_TOPIC2_008=20221005_405¶ÈÂÊ¯Îß³»Þ²
     set BEF_PROC2B_TOPIC2_008=405¶ÈÂÊ¯Îß³»Þ²
     set AFT_PROC2B_TOPIC2_008=b0008
-    ::
+    ::--------------------------------------------------
+    ::FT02
+    ::--------------------------------------------------
     set BEF_PROC2B_TOPIC3_001=Input0_Camera
     set AFT_PROC2B_TOPIC3_001=dl
     set BEF_PROC2B_TOPIC3_002=.jpg

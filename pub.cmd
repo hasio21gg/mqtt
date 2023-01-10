@@ -231,12 +231,16 @@ setlocal
 	::----------------------------------------------------------------------------
     set PROCNAME=PROC2
 	CALL :MSGPROC START
+	
+	::実行時引数
+	set ASCHE=%2
 
 	::■パラメタ読込
 	set FLIST=%$ROOT%filelist_proc2.txt
 	CALL :MSGPROC FLIST:[%FLIST%]
 	set /a LISTCOUNT=0
-	FOR /F "eol=; tokens=1,2,3,4,5,6,7 delims=, " %%I in (%FLIST%) do (
+	SETLOCAL ENABLEDELAYEDEXPANSION
+	FOR /F "eol=; tokens=1,2,3,4,5,6,7,8 delims=, " %%I in (%FLIST%) do (
 		set /a LISTCOUNT+=1
 		set FTYPE=%%I
 		set FKUBUN=%%J
@@ -245,13 +249,28 @@ setlocal
 		set FRECUR=%%M
 		set FTIME=%%N
 		set FTOPIC=%%O
-		CALL :%%I
+		set FSCHE=%%P
+		set FLEXEC=0
+		IF "%ASCHE%"=="" (
+			IF "!FSCHE!"=="N" set FLEXEC=1
+		) ELSE (
+			IF "%ASCHE%"=="!FSCHE!" set FLEXEC=1
+		)
+		rem echo A:%ASCHE% F:!FSCHE!
+		IF !FLEXEC! EQU 1 (
+			CALL :MSGPROC EXECUTE[%ASCHE%][!FSCHE!]
+			CALL :%%I
+		) ELSE (
+			CALL :MSGPROC NOT_EXECUTE[%ASCHE%][!FSCHE!]
+		)
 	)
+	SETLOCAL DISABLEDELAYEDEXPANSION
     set PROCNAME=PROC2
 	IF %LISTCOUNT% EQU 0 (
 		CALL :MSGPROC FILELIST_RECORDS_NOT_FOUND.
 		goto PROC2_END
 	)
+	CALL :MSGPROC FILELIST_RECORDS[%LISTCOUNT%].
 	IF "%FTYPE%" EQU "" (
 		CALL :MSGPROC ERROR!!
 		EXIT /B 9
@@ -265,14 +284,17 @@ setlocal
 	cscript %$ROOT%UtyDirDelete.vbs %$LOG% -10
     goto ENDPROC
 :PROC2A
-	echo ================================================================================
     set PROCNAME=PROC2A
-	CALL :MSGPROC FLIST :[%FLIST%]
-	CALL :MSGPROC FTYPE :[%FTYPE%]
+	CALL :MSGPROC --------------------------------------------------
+	CALL :MSGPROC FLIST  :[%FLIST%]
+	CALL :MSGPROC FTYPE  :[%FTYPE%]
 	CALL :MSGPROC FKUBUN :[%FKUBUN%]
-	CALL :MSGPROC FPATERN :[%FPATERN%]
-	CALL :MSGPROC FPATH :[%FPATH%]
+	CALL :MSGPROC FPATERN:[%FPATERN%]
+	CALL :MSGPROC FPATH  :[%FPATH%]
 	CALL :MSGPROC FRECUR :[%FRECUR%]
+	CALL :MSGPROC FTIME  :[%FTIME%]
+	CALL :MSGPROC FTOPIC :[%FTOPIC%]
+	CALL :MSGPROC FSCHE  :[%FSCHE%]
 
     ::set SRCPATH=%$SRCLOC%%$SRCDIR%
     set SRCPATH=%$SRCLOC%
@@ -317,6 +339,22 @@ setlocal
 		CALL :MSGPROC WARN_NOT_FOUND_FILES.[%ERRORLEVEL%]
 		goto PROC2A_END
 	)
+	::::
+	::ファイル名に空白入る(機器設定側不備)への対応
+	::1)Item_ とすべきところItem となった場合を想定
+	SETLOCAL ENABLEDELAYEDEXPANSION
+	FOR /F "delims=," %%I IN (%WORKFILE%) DO (
+		::ECHO %%I
+		set MAE=%%I
+		set ATO=!MAE:Item =Item_!
+		IF "!MAE!" NEQ "!ATO!" (
+			CALL :MSGPROC MOVE "!MAE!" "!ATO!"
+			MOVE "!MAE!" "!ATO!"
+		)
+	)
+	SETLOCAL DISABLEDELAYEDEXPANSION
+	DIR /B %SRCFIND% /A-D %DIROPT% | FINDSTR /R "%FPATERN%" > %WORKFILE%
+	::::
 	::■ファイル一覧からNASから移動
 	set PRNAME=PROC2A1
 	ECHO.>%TMPWORKFILE%
@@ -563,6 +601,11 @@ setlocal
 :FT05
 	set IN01=%1
 	set IN01=%IN01:__=_0_%
+	set IN01=%IN01:Copied_1_=%
+	set IN01=%IN01:Copied_2_=%
+	set IN01=%IN01:Copied_3_=%
+	set IN01=%IN01:Copied_1_=%
+	set IN01=%IN01:workColor_=%
 	set TMI=%3
 	::TGT:OK__Default_Work_2_Item_1_20221020_173351.jpg
 	::20221007181519605

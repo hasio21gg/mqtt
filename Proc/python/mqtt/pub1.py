@@ -156,7 +156,7 @@ if __name__ == '__main__':
         row['DATETIME'] = DATETIME
         topic = row['TOPIC'].lower()
         # topicは英字、数字、ダッシュのみ
-        recvtopic = re.sub('([0-9a-zA-Z\-]+)/([0-9a-zA-Z\-]+)/.*'    , f'\\1/\\2-job/{dtepoc}', topic)
+        recvtopic = re.sub('([0-9a-zA-Z\-]+)/([0-9a-zA-Z\-]+)/.*'    , f'\\1/\\2-job/{dtepoc_full}', topic)
         
         s3_prefix = f"iot/{topic}year={YEAR}/month={MONTH}/day={DAY}/hour={HOUR}/datetime={DATETIME}/"
         row['TOPIC'] = topic
